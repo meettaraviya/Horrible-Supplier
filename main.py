@@ -6,21 +6,20 @@ Rearth=6371000
 page = urllib2.urlopen('https://maps.googleapis.com/maps/api/directions/json?origin=IIT+Bombay&destination=IIT+Bombay')
 resp = page.read()
 data = json.loads(resp)
-itheta = (90 - data['routes'][0]['legs'][0]['start_location']['lat'])*f
-iphi = (data['routes'][0]['legs'][0]['start_location']['lng'] +180)*f
+ilat = (data['routes'][0]['legs'][0]['start_location']['lat'])*f
+ilng = (data['routes'][0]['legs'][0]['start_location']['lng'])*f
 class city:
     def __init__(self, s, d, lt, lg):
         self.name = s
         self.dist = d
         if lt == 100 or lg == 100:
-            self.bldist = 100000000
+            self.bldist = 'infi'
         else:
-            theta = (90 - lt)*f
-            phi = (lg + 180)*f
-            dot = math.cos(theta)*math.cos(itheta)+math.sin(theta)*math.sin(itheta)*math.cos(iphi-phi)
-            self.bldist = Rearth*math.acos(dot)
-    def __repr__(self):
-        return repr((self.name,self.dist))
+            phi = lt*f
+            dl = lg*f - ilng
+            y = math.sqrt( math.pow( math.cos(phi)*math.sin(dl), 2 ) + math.pow( math.cos(ilat)*math.sin(phi)-math.cos(phi)*math.sin(ilat)*math.cos(dl), 2 ))
+            x = math.sin(phi)*math.sin(ilat)+math.cos(dl)*math.cos(phi)*math.cos(ilat)
+            self.bldist = Rearth*math.atan2(y,x)
 cities = []
 with open('input.txt') as inpfile:
     N = int(inpfile.readline())
@@ -34,7 +33,7 @@ with open('input.txt') as inpfile:
         try:
             dist = data['routes'][0]['legs'][0]['distance']['value']
         except IndexError:
-            dist = 100000000
+            dist = 'infi'
         try:
             lat =data2['routes'][0]['legs'][0]['end_location']['lat']
             lng =data2['routes'][0]['legs'][0]['end_location']['lng']
@@ -46,10 +45,10 @@ sortbydist = sorted(cities, key=lambda city: city.dist)
 sortbybldist = sorted(cities, key=lambda city: city.bldist)
 print 'Cities in order of distance by driving:'
 for c in sortbydist:
-    print '\t'+c.name
+    print '\t'+c.name+'\t'+str(c.dist)+ ' m'
 print '\n'
 print 'Cities in order of bird line distance:'
 for c in sortbybldist:
-    print '\t'+c.name
+    print '\t'+c.name+'\t'+str(c.bldist)+ ' m'
 
 
